@@ -25,6 +25,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 SECTION_ORDER = ["新锐观点", "市场动向", "成果发布"]
+DEFAULT_LINE_SPACING = Pt(30)
 
 FIXED_EDITOR_NOTE = [
     "以习近平同志为核心的党中央高度重视建设世界一流企业。党的二十大报告明确提出，完善中国特色现代企业制度，弘扬企业家精神，加快建设世界一流企业。近年来，国务院国资委组织中央企业和地方国有重点企业开展对标世界一流管理提升行动，推动国有企业在先进的管理中要质量、要效益、要增长。",
@@ -230,7 +231,7 @@ def _format_para(
     align=WD_ALIGN_PARAGRAPH.JUSTIFY,
     first_line_pt: float | None = 32,
     left_indent_pt: float | None = None,
-    line_spacing: float | Pt = Pt(28),
+    line_spacing: float | Pt = DEFAULT_LINE_SPACING,
     space_before: float = 0,
     space_after: float = 0,
 ) -> None:
@@ -254,7 +255,7 @@ def _add_paragraph(
     align=WD_ALIGN_PARAGRAPH.JUSTIFY,
     first_line_pt: float | None = 32,
     left_indent_pt: float | None = None,
-    line_spacing: float | Pt = Pt(28),
+    line_spacing: float | Pt = DEFAULT_LINE_SPACING,
     space_before: float = 0,
     space_after: float = 0,
 ):
@@ -274,7 +275,7 @@ def _add_paragraph(
     return p
 
 
-def _add_blank(doc: Document, *, line_spacing: float | Pt = Pt(28), align=WD_ALIGN_PARAGRAPH.JUSTIFY) -> None:
+def _add_blank(doc: Document, *, line_spacing: float | Pt = DEFAULT_LINE_SPACING, align=WD_ALIGN_PARAGRAPH.JUSTIFY) -> None:
     _add_paragraph(doc, "", align=align, first_line_pt=None, line_spacing=line_spacing)
 
 
@@ -312,7 +313,7 @@ def _add_toc_article(doc: Document, title: str, page_no: int) -> None:
         font="仿宋",
         align=WD_ALIGN_PARAGRAPH.LEFT,
         first_line_pt=None,
-        line_spacing=1.8,
+        line_spacing=DEFAULT_LINE_SPACING,
     )
     p.paragraph_format.tab_stops.add_tab_stop(
         Cm(15.3),
@@ -326,7 +327,7 @@ def _add_toc_article(doc: Document, title: str, page_no: int) -> None:
 
 
 def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
-    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER, line_spacing=1.0)
+    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER)
     _add_paragraph(
         doc,
         "目 录",
@@ -335,9 +336,9 @@ def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
         font="黑体",
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
-        line_spacing=1.0,
+        line_spacing=DEFAULT_LINE_SPACING,
     )
-    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER, line_spacing=1.0)
+    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER)
     page_no = 1
     for sec in sections:
         _add_paragraph(
@@ -348,7 +349,7 @@ def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
             font="黑体",
             align=WD_ALIGN_PARAGRAPH.LEFT,
             first_line_pt=None,
-            line_spacing=1.8,
+            line_spacing=DEFAULT_LINE_SPACING,
         )
         for article in sec["articles"]:
             _add_toc_article(doc, article["title"], page_no)
@@ -356,7 +357,7 @@ def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
 
 
 def _add_section_heading(doc: Document, text: str) -> None:
-    _add_blank(doc, line_spacing=Pt(28))
+    _add_blank(doc)
     _add_paragraph(
         doc,
         f"【{text}】",
@@ -365,7 +366,7 @@ def _add_section_heading(doc: Document, text: str) -> None:
         font="微软雅黑",
         align=WD_ALIGN_PARAGRAPH.LEFT,
         first_line_pt=None,
-        line_spacing=1.39,
+        line_spacing=DEFAULT_LINE_SPACING,
     )
 
 
@@ -378,7 +379,7 @@ def _add_article_title(doc: Document, text: str) -> None:
         font="方正小标宋_GBK",
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
-        line_spacing=Pt(28),
+        line_spacing=DEFAULT_LINE_SPACING,
         space_before=15,
     )
 
@@ -438,7 +439,7 @@ def _add_tracking_scope(doc: Document) -> None:
         font="黑体",
         align=WD_ALIGN_PARAGRAPH.JUSTIFY,
         first_line_pt=None,
-        line_spacing=Pt(28),
+        line_spacing=DEFAULT_LINE_SPACING,
     )
     p = _add_paragraph(
         doc,
@@ -448,11 +449,11 @@ def _add_tracking_scope(doc: Document) -> None:
         align=WD_ALIGN_PARAGRAPH.LEFT,
         first_line_pt=None,
         left_indent_pt=172.65,
-        line_spacing=0.95,
+        line_spacing=DEFAULT_LINE_SPACING,
         space_before=12.85,
     )
     p.paragraph_format.keep_with_next = True
-    _add_blank(doc, line_spacing=Pt(12))
+    _add_blank(doc)
     for idx, name in enumerate(FIXED_TRACKING_SCOPE, 1):
         p = _add_paragraph(
             doc,
@@ -461,7 +462,7 @@ def _add_tracking_scope(doc: Document) -> None:
             font="仿宋",
             align=WD_ALIGN_PARAGRAPH.LEFT,
             first_line_pt=32,
-            line_spacing=Pt(30),
+            line_spacing=DEFAULT_LINE_SPACING,
         )
         p.paragraph_format.tab_stops.add_tab_stop(Cm(2.6), alignment=WD_TAB_ALIGNMENT.LEFT)
         num_run = p.add_run(f"{idx}.\t")
@@ -478,9 +479,13 @@ def render_docx(report: dict[str, Any]) -> Path:
     _add_toc(doc, report["sections"])
     _add_page_break(doc)
 
+    article_index = 0
+    article_total = sum(len(sec["articles"]) for sec in report["sections"])
     for sec in report["sections"]:
         _add_section_heading(doc, sec["section_title"])
-        for article in sec["articles"]:
+        for idx, article in enumerate(sec["articles"]):
+            if idx > 0:
+                _add_section_heading(doc, sec["section_title"])
             _add_article_title(doc, article["title"])
             _add_meta(doc, article)
             if article["summary"]:
@@ -491,6 +496,9 @@ def render_docx(report: dict[str, Any]) -> Path:
                 _add_body_text(doc, para)
             if article["url"]:
                 _add_paragraph(doc, f"原文链接：{article['url']}", size=16, font="仿宋", first_line_pt=None)
+            article_index += 1
+            if article_index < article_total:
+                _add_page_break(doc)
 
     _add_page_break(doc)
     _add_tracking_scope(doc)
