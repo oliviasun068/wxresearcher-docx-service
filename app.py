@@ -10,7 +10,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT, WD_TAB_LEADER
@@ -89,6 +89,44 @@ def _parse_report_json(payload: Any) -> dict[str, Any]:
             if isinstance(parsed, dict):
                 return parsed
     raise ValueError("report_json must be an object or a JSON object string")
+
+
+def _parse_multipart_form(raw: bytes, content_type: str) -> dict[str, str]:
+    match = re.search(r'boundary="?([^";]+)"?', content_type)
+    if not match:
+        raise ValueError("multipart/form-data missing boundary")
+
+    boundary = ("--" + match.group(1)).encode("utf-8")
+    fields: dict[str, str] = {}
+    for part in raw.split(boundary):
+        part = part.strip(b"\r\n")
+        if not part or part == b"--":
+            continue
+        header_raw, sep, body = part.partition(b"\r\n\r\n")
+        if not sep:
+            continue
+        headers = header_raw.decode("utf-8", errors="ignore")
+        name_match = re.search(r'name="([^"]+)"', headers)
+        if not name_match:
+            continue
+        fields[name_match.group(1)] = body.rstrip(b"\r\n-").decode("utf-8", errors="ignore")
+    return fields
+
+
+def _parse_request_payload(raw: bytes, content_type: str) -> dict[str, Any]:
+    content_type = content_type.lower()
+    if "application/json" in content_type:
+        return json.loads(raw.decode("utf-8"))
+    if "multipart/form-data" in content_type:
+        return _parse_multipart_form(raw, content_type)
+    if "application/x-www-form-urlencoded" in content_type:
+        parsed = parse_qs(raw.decode("utf-8"), keep_blank_values=True)
+        return {key: values[-1] if values else "" for key, values in parsed.items()}
+
+    text = raw.decode("utf-8").strip()
+    if text.startswith("{"):
+        return json.loads(text)
+    return {"report_json": text}
 
 
 def _normalize_report(raw: dict[str, Any]) -> dict[str, Any]:
@@ -500,7 +538,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            payload = _parse_request_payload(
+                self.rfile.read(length),
+                self.headers.get("Content-Type", ""),
+            )
             raw_report = payload.get("report_json", payload)
             report = _normalize_report(_parse_report_json(raw_report))
             if not report["sections"]:
