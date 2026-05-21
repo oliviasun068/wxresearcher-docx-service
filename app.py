@@ -10,7 +10,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, unquote
+from urllib.parse import parse_qs, quote, unquote
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT, WD_TAB_LEADER
@@ -525,7 +525,11 @@ class Handler(BaseHTTPRequestHandler):
             data = path.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-            self.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
+            ascii_name = _clean_filename(path.stem).encode("ascii", "ignore").decode("ascii") or "report"
+            self.send_header(
+                "Content-Disposition",
+                f"attachment; filename=\"{ascii_name}{path.suffix}\"; filename*=UTF-8''{quote(path.name)}",
+            )
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             self.wfile.write(data)
@@ -549,7 +553,7 @@ class Handler(BaseHTTPRequestHandler):
             out_path = render_docx(report)
             host = self.headers.get("Host", f"127.0.0.1:{self.server.server_port}")
             scheme = "https" if self.headers.get("X-Forwarded-Proto") == "https" else "http"
-            file_url = f"{scheme}://{host}/files/{out_path.name}"
+            file_url = f"{scheme}://{host}/files/{quote(out_path.name)}"
             encoded = base64.b64encode(out_path.read_bytes()).decode("ascii")
             self._json(200, {
                 "success": True,
