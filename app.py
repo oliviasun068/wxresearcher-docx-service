@@ -25,11 +25,11 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 SECTION_ORDER = ["新锐观点", "市场动向", "成果发布"]
-DEFAULT_LINE_SPACING = Pt(30)
+DEFAULT_LINE_SPACING = Pt(28)
+TOC_LINE_SPACING = DEFAULT_LINE_SPACING
 
 FIXED_EDITOR_NOTE = [
-    "以习近平同志为核心的党中央高度重视建设世界一流企业。党的二十大报告明确提出，完善中国特色现代企业制度，弘扬企业家精神，加快建设世界一流企业。近年来，国务院国资委组织中央企业和地方国有重点企业开展对标世界一流管理提升行动，推动国有企业在先进的管理中要质量、要效益、要增长。",
-    "作为服务党和国家科学民主决策的智力型中央企业，中咨公司始终以建设世界一流咨询机构和国家高端智库为目标，致力于探索如何建设一流咨询机构，如何在服务中国式现代化进程中实现再出发、再发展、再辉煌。为此，我们持续跟踪国内外20余家咨询机构（见附件）的新锐观点、市场动向及成果发布动态，深化对标研究，供交流参考。",
+    "以习近平同志为核心的党中央高度重视建设世界一流企业。党的二十大报告明确提出，完善中国特色现代企业制度，弘扬企业家精神，加快建设世界一流企业。近年来，国务院国资委组织中央企业和地方国有重点企业开展对标世界一流管理提升行动，推动国有企业在先进的管理中要质量、要效益、要增长。作为服务党和国家科学民主决策的智力型中央企业，中咨公司始终以建设世界一流咨询机构和国家高端智库为目标，致力于探索如何建设一流咨询机构，如何在服务中国式现代化进程中实现再出发、再发展、再辉煌。为此，我们持续跟踪国内外20余家咨询机构（见附件）的新锐观点、市场动向及成果发布动态，深化对标研究，供交流参考。",
 ]
 
 FIXED_TRACKING_SCOPE = [
@@ -45,7 +45,7 @@ FIXED_TRACKING_SCOPE = [
     "北京国际工程咨询有限公司",
     "国信国际工程咨询集团股份有限公司",
     "中国信息通信研究院",
-    "北大纵横管理咨询集团",
+    "上海投资咨询集团有限公司",
     "综合开发研究院",
     "北京零点有数数据科技股份有限公司",
     "华夏基石管理咨询",
@@ -194,10 +194,10 @@ def _new_document() -> Document:
     section = doc.sections[0]
     section.page_width = Cm(21.0)
     section.page_height = Cm(29.7)
-    section.top_margin = Cm(2.46)
-    section.bottom_margin = Cm(2.22)
-    section.left_margin = Cm(2.54)
-    section.right_margin = Cm(3.15)
+    section.top_margin = Cm(2.54)
+    section.bottom_margin = Cm(2.54)
+    section.left_margin = Cm(3.18)
+    section.right_margin = Cm(3.18)
     section.header_distance = Cm(0)
     section.footer_distance = Cm(1.75)
     return doc
@@ -309,11 +309,11 @@ def _add_toc_article(doc: Document, title: str, page_no: int) -> None:
     p = _add_paragraph(
         doc,
         "",
-        size=15.5,
+        size=16,
         font="仿宋",
         align=WD_ALIGN_PARAGRAPH.LEFT,
         first_line_pt=None,
-        line_spacing=DEFAULT_LINE_SPACING,
+        line_spacing=TOC_LINE_SPACING,
     )
     p.paragraph_format.tab_stops.add_tab_stop(
         Cm(15.3),
@@ -321,13 +321,12 @@ def _add_toc_article(doc: Document, title: str, page_no: int) -> None:
         leader=WD_TAB_LEADER.DOTS,
     )
     title_run = p.add_run(title)
-    _set_run_font(title_run, 15.5, False, "仿宋", "Times New Roman")
+    _set_run_font(title_run, 16, False, "仿宋", "Times New Roman")
     page_run = p.add_run(f"\t{page_no}")
-    _set_run_font(page_run, 15.5, False, "仿宋", "Times New Roman")
+    _set_run_font(page_run, 16, False, "仿宋", "Times New Roman")
 
 
 def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
-    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER)
     _add_paragraph(
         doc,
         "目 录",
@@ -336,20 +335,28 @@ def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
         font="黑体",
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
-        line_spacing=DEFAULT_LINE_SPACING,
+        line_spacing=TOC_LINE_SPACING,
     )
-    _add_blank(doc, align=WD_ALIGN_PARAGRAPH.CENTER)
+    _add_paragraph(
+        doc,
+        " ",
+        size=18,
+        font="黑体",
+        align=WD_ALIGN_PARAGRAPH.CENTER,
+        first_line_pt=None,
+        line_spacing=TOC_LINE_SPACING,
+    )
     page_no = 1
     for sec in sections:
         _add_paragraph(
             doc,
             f"【{sec['section_title']}】",
-            size=15.5,
+            size=16,
             bold=True,
             font="黑体",
             align=WD_ALIGN_PARAGRAPH.LEFT,
             first_line_pt=None,
-            line_spacing=DEFAULT_LINE_SPACING,
+            line_spacing=TOC_LINE_SPACING,
         )
         for article in sec["articles"]:
             _add_toc_article(doc, article["title"], page_no)
@@ -357,13 +364,12 @@ def _add_toc(doc: Document, sections: list[dict[str, Any]]) -> None:
 
 
 def _add_section_heading(doc: Document, text: str) -> None:
-    _add_blank(doc)
     _add_paragraph(
         doc,
         f"【{text}】",
-        size=18,
+        size=16,
         bold=True,
-        font="微软雅黑",
+        font="方正小标宋_GBK",
         align=WD_ALIGN_PARAGRAPH.LEFT,
         first_line_pt=None,
         line_spacing=DEFAULT_LINE_SPACING,
@@ -380,7 +386,7 @@ def _add_article_title(doc: Document, text: str) -> None:
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
         line_spacing=DEFAULT_LINE_SPACING,
-        space_before=15,
+        space_before=0,
     )
 
 
@@ -483,9 +489,7 @@ def render_docx(report: dict[str, Any]) -> Path:
     article_total = sum(len(sec["articles"]) for sec in report["sections"])
     for sec in report["sections"]:
         _add_section_heading(doc, sec["section_title"])
-        for idx, article in enumerate(sec["articles"]):
-            if idx > 0:
-                _add_section_heading(doc, sec["section_title"])
+        for article in sec["articles"]:
             _add_article_title(doc, article["title"])
             _add_meta(doc, article)
             if article["summary"]:
