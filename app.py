@@ -27,6 +27,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 SECTION_ORDER = ["新锐观点", "市场动向", "成果发布"]
 DEFAULT_LINE_SPACING = Pt(28)
 TOC_LINE_SPACING = DEFAULT_LINE_SPACING
+TRACKING_SCOPE_LIST_LINE_SPACING = Pt(30)
 
 FIXED_EDITOR_NOTE = [
     "以习近平同志为核心的党中央高度重视建设世界一流企业。党的二十大报告明确提出，完善中国特色现代企业制度，弘扬企业家精神，加快建设世界一流企业。近年来，国务院国资委组织中央企业和地方国有重点企业开展对标世界一流管理提升行动，推动国有企业在先进的管理中要质量、要效益、要增长。作为服务党和国家科学民主决策的智力型中央企业，中咨公司始终以建设世界一流咨询机构和国家高端智库为目标，致力于探索如何建设一流咨询机构，如何在服务中国式现代化进程中实现再出发、再发展、再辉煌。为此，我们持续跟踪国内外20余家咨询机构（见附件）的新锐观点、市场动向及成果发布动态，深化对标研究，供交流参考。",
@@ -386,7 +387,7 @@ def _add_article_title(doc: Document, text: str) -> None:
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
         line_spacing=DEFAULT_LINE_SPACING,
-        space_before=0,
+        space_before=15,
     )
 
 
@@ -403,6 +404,14 @@ def _add_meta(doc: Document, article: dict[str, Any]) -> None:
         "|".join(parts),
         size=16,
         bold=True,
+        font="楷体",
+        align=WD_ALIGN_PARAGRAPH.CENTER,
+        first_line_pt=None,
+    )
+    _add_paragraph(
+        doc,
+        " ",
+        size=16,
         font="楷体",
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
@@ -452,9 +461,8 @@ def _add_tracking_scope(doc: Document) -> None:
         "主要跟踪范围",
         size=17.5,
         font="黑体",
-        align=WD_ALIGN_PARAGRAPH.LEFT,
+        align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
-        left_indent_pt=172.65,
         line_spacing=DEFAULT_LINE_SPACING,
         space_before=12.85,
     )
@@ -468,7 +476,7 @@ def _add_tracking_scope(doc: Document) -> None:
             font="仿宋",
             align=WD_ALIGN_PARAGRAPH.LEFT,
             first_line_pt=32,
-            line_spacing=DEFAULT_LINE_SPACING,
+            line_spacing=TRACKING_SCOPE_LIST_LINE_SPACING,
         )
         p.paragraph_format.tab_stops.add_tab_stop(Cm(2.6), alignment=WD_TAB_ALIGNMENT.LEFT)
         num_run = p.add_run(f"{idx}.\t")
