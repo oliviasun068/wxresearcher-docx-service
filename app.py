@@ -377,7 +377,7 @@ def _add_section_heading(doc: Document, text: str) -> None:
     )
 
 
-def _add_article_title(doc: Document, text: str) -> None:
+def _add_article_title(doc: Document, text: str, *, space_before: float = 15) -> None:
     _add_paragraph(
         doc,
         text,
@@ -387,7 +387,19 @@ def _add_article_title(doc: Document, text: str) -> None:
         align=WD_ALIGN_PARAGRAPH.CENTER,
         first_line_pt=None,
         line_spacing=DEFAULT_LINE_SPACING,
-        space_before=15,
+        space_before=space_before,
+    )
+
+
+def _add_article_title_lead_space(doc: Document) -> None:
+    _add_paragraph(
+        doc,
+        " ",
+        size=1,
+        font="方正小标宋_GBK",
+        align=WD_ALIGN_PARAGRAPH.CENTER,
+        first_line_pt=None,
+        line_spacing=Pt(15),
     )
 
 
@@ -498,7 +510,10 @@ def render_docx(report: dict[str, Any]) -> Path:
     for sec in report["sections"]:
         _add_section_heading(doc, sec["section_title"])
         for article in sec["articles"]:
-            _add_article_title(doc, article["title"])
+            use_lead_space = article_index > 0
+            if use_lead_space:
+                _add_article_title_lead_space(doc)
+            _add_article_title(doc, article["title"], space_before=0 if use_lead_space else 15)
             _add_meta(doc, article)
             if article["summary"]:
                 _add_summary(doc, article["summary"])
