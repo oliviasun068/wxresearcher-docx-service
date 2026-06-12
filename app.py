@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import parse_qs, quote, unquote
 
 from docx import Document
+from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -284,6 +285,51 @@ def _add_page_break(doc: Document) -> None:
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
 
+def _restart_section_page_number(section, start: int = 1) -> None:
+    sect_pr = section._sectPr
+    for node in list(sect_pr):
+        if node.tag == qn("w:pgNumType"):
+            sect_pr.remove(node)
+    pg_num_type = OxmlElement("w:pgNumType")
+    pg_num_type.set(qn("w:start"), str(start))
+    sect_pr.append(pg_num_type)
+
+
+def _add_page_number_field(paragraph) -> None:
+    begin = OxmlElement("w:fldChar")
+    begin.set(qn("w:fldCharType"), "begin")
+    instr = OxmlElement("w:instrText")
+    instr.set(qn("xml:space"), "preserve")
+    instr.text = " PAGE  \\* MERGEFORMAT "
+    separate = OxmlElement("w:fldChar")
+    separate.set(qn("w:fldCharType"), "separate")
+    end = OxmlElement("w:fldChar")
+    end.set(qn("w:fldCharType"), "end")
+
+    for element in (begin, instr, separate):
+        run = paragraph.add_run()
+        run._r.append(element)
+        _set_run_font(run, 9, False, "Times New Roman", "Times New Roman")
+    number = paragraph.add_run("1")
+    _set_run_font(number, 9, False, "Times New Roman", "Times New Roman")
+    run = paragraph.add_run()
+    run._r.append(end)
+    _set_run_font(run, 9, False, "Times New Roman", "Times New Roman")
+
+
+def _start_body_section_with_page_numbers(doc: Document) -> None:
+    section = doc.add_section(WD_SECTION.NEW_PAGE)
+    section.footer.is_linked_to_previous = False
+    section.header.is_linked_to_previous = False
+    _restart_section_page_number(section, 1)
+
+    footer = section.footer
+    paragraph = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+    paragraph.clear()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _add_page_number_field(paragraph)
+
+
 def _add_editor_note(doc: Document) -> None:
     for _ in range(5):
         _add_blank(doc)
@@ -503,7 +549,7 @@ def render_docx(report: dict[str, Any]) -> Path:
     _add_editor_note(doc)
     _add_page_break(doc)
     _add_toc(doc, report["sections"])
-    _add_page_break(doc)
+    _start_body_section_with_page_numbers(doc)
 
     article_index = 0
     article_total = sum(len(sec["articles"]) for sec in report["sections"])
